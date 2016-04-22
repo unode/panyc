@@ -1,0 +1,13 @@
+language: python
+# Use containers instead of VMs
+sudo: false
+
+python:
+    - "3.4"
+    - "3.5"
+
+install:
+    - pip install -r requirements.txt
+
+script:
+    - cd tests && ./run_all -v

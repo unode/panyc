@@ -1,0 +1,57 @@
+>Cisco AnyConnect Secure Mobility Client (version 4.2.03013) .
+>
+>Copyright (c) 2004 - 2016 Cisco Systems, Inc.  All Rights Reserved.
+>
+>
+>  >> state: Disconnected
+>VPN>   >> state: Disconnected
+>VPN>   >> notice: Ready to connect.
+>VPN>   >> registered with local VPN subsystem.
+>VPN> 
+<state
+>VPN>   >> state: Disconnected
+>VPN> 
+<connect localhost
+>  >> contacting host (localhost) for login information...
+>VPN>   >> notice: Contacting localhost.
+>
+>  >> Please enter your username and password.
+>    0) ADMIN
+>    1) USER
+>Group: [USER] 
+<
+>Username: [username] 
+<myuser
+>  Password: 
+<mypassword
+>  >> state: Connecting
+>VPN>   >> notice: Establishing VPN session...
+>The AnyConnect Downloader is analyzing this computer. Please wait...
+>The AnyConnect Downloader is performing update checks...
+>  >> notice: The AnyConnect Downloader is performing update checks...
+>  >> notice: Checking for profile updates...
+>The AnyConnect Downloader updates have been completed.
+>Please wait while the VPN connection is established...
+>  >> notice: Checking for product updates...
+>  >> notice: Checking for customization updates...
+>  >> notice: Performing any required updates...
+>  >> notice: The AnyConnect Downloader updates have been completed.
+>  >> state: Connecting
+>VPN>   >> notice: Establishing VPN session...
+>  >> notice: Establishing VPN - Initiating connection...
+>  >> notice: Establishing VPN - Examining system...
+>  >> notice: Establishing VPN - Activating VPN adapter...
+>  >> notice: Establishing VPN - Configuring system...
+>  >> state: Connected
+>VPN>   >> notice: Establishing VPN...
+>VPN>   >> notice: Connected to localhost.
+>VPN>   >> state: Connected
+>VPN> 
+<state
+>VPN>   >> state: Connected
+>VPN> 
+<exit
+>goodbye...
+>  >> note: VPN Connection is still active.
+>
+>

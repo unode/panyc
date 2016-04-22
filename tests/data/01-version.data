@@ -1,0 +1,23 @@
+>Cisco AnyConnect Secure Mobility Client (version 4.2.03013) .
+>
+>Copyright (c) 2004 - 2016 Cisco Systems, Inc.  All Rights Reserved.
+>
+>
+>  >> state: Connected
+>VPN>   >> state: Connected
+>VPN>   >> notice: Connected to Not Available.
+>VPN>   >> registered with local VPN subsystem.
+>VPN> 
+<version
+>Cisco AnyConnect Secure Mobility Client (version 4.2.03013) .
+>
+>Copyright (c) 2004 - 2016 Cisco Systems, Inc.  All Rights Reserved.
+>
+>
+>VPN>   >> state: Connected
+>VPN> 
+<exit
+>goodbye...
+>  >> note: VPN Connection is still active.
+>
+>
