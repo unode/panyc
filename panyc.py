@@ -193,10 +193,17 @@ class VPNManager(object):
         # Otherwise map group names to group IDs.
         # In the prompt we need to provide the group ID
         else:
-            LOG.debug("Obtaining group id")
+            LOG.debug("Obtaining group id from: %r", group_list)
             groups = {}
-            for line in group_list:
-                line.strip().split(") ")
+            for line in group_list.splitlines():
+                line = line.strip()
+
+                if not line:
+                    continue
+
+                LOG.debug("Parsing line %r", line)
+                _id, name = line.split(") ")
+                groups[name] = _id
 
             if profile["group"] not in groups:
                 raise Exit(Exit.BADGROUP, "Profile provided group is not on the "
