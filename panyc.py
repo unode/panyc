@@ -11,7 +11,7 @@ from io import StringIO
 from subprocess import Popen, PIPE
 from configparser import RawConfigParser, NoOptionError
 
-VPN = "/opt/cisco/anyconnect/bin/vpn"
+__version__ = "0.0.1"
 
 
 class Exit(Exception):
@@ -103,10 +103,10 @@ class VPNManager(object):
             version = self.version()
             self.exit()
 
-            raise Exit(Exit.SUCCESS, "VPN client is version: {}".format(version))
+            raise Exit(Exit.SUCCESS, "Panyc is version: {}\nVPN client is version: {}".format(__version__, version))
 
         # User requested only the status of the connection
-        if self.args.status:
+        if self.args.action == "status":
             LOG.info("Obtaining connection status...")
             state = self.state()
             self.exit()
@@ -117,7 +117,7 @@ class VPNManager(object):
                 raise Exit(Exit.ERROR, "VPN is not connected")
 
         # User requested that we would disconnect
-        elif self.args.disconnect:
+        elif self.args.action == "disconnect":
             LOG.info("Disconnecting...")
             self.disconnect()
             self.exit()
@@ -358,29 +358,33 @@ def setup_logging(args):
 def parse_sys_args():
     """Parse command line arguments
     """
+    VPN = "/opt/cisco/anyconnect/bin/vpn"
     parser = argparse.ArgumentParser(
         description="Interact with Cisco's AnyConnect VPN client"
     )
-    parser.add_argument("profile", nargs="?",
-                        help="Name of connection profile to use")
     parser.add_argument("-c", "--cmd", default=VPN,
                         help="Command and path to launch the vpn binary (default: {})".format(VPN))
-    parser.add_argument("-s", "--status", action="store_true",
-                        help="Display the connection status of the VPN")
-    parser.add_argument("-d", "--disconnect", action="store_true",
-                        help="Disconnect any active connection")
-    parser.add_argument("--version", action="store_true",
-                        help="Print the version of the VPN client")
-    parser.add_argument("-p", "--post-cmd", action="store_true",
+    parser.add_argument("-p", "--post-cmd",
                         help="Call post_cmd in the configuration after establishing a connection")
-
     parser.add_argument("-v", "--verbose", action="count", default=0,
                         help="Verbosity level. Warning on -vv (highest level) user input will be printed on screen")
 
+    parser.add_argument("--version", action="store_true",
+                        help="Print the version of panyc and the VPN client")
+
+    subparser = parser.add_subparsers(dest="action")
+
+    connect = subparser.add_parser("connect")
+    connect.add_argument("profile",
+                         help="Name of connection profile (check README) or '-' to read from stdin.")
+
+    subparser.add_parser("disconnect")
+    subparser.add_parser("status")
+
     args = parser.parse_args()
 
-    if args.profile is None and not any((args.disconnect, args.status, args.version)):
-        raise parser.error("Argument: 'profile' can only be omitted when '--disconnect', '--status' or '--version' is given")
+    if args.action is None and not args.version:
+        raise parser.error("Argument: 'action' is required unless '--version' is given.")
 
     if args.post_cmd:
         raise parser.error("Option '--post-cmd' is not yet implemented")
@@ -393,6 +397,7 @@ def main():
     """
     args = parse_sys_args()
     setup_logging(args)
+    LOG.debug(args)
 
     v = VPNManager(args)
     v.begin()
