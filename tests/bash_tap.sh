@@ -39,17 +39,30 @@ function bashtap_run_testcase {
             local cmd_output
             local cmd_ret
 
-            eval "$bashtap_line" &> bashtap_out_tmp
-            cmd_ret=$?
-            cmd_output="$(sed 's/^/# >>> /' < bashtap_out_tmp)"
+            # Retry a failed test up to 3 times before giving up
+            for retry in $(seq 3); do
+                eval "$bashtap_line" &> bashtap_out_tmp
+                cmd_ret=$?
+                cmd_output="$(sed 's/^/# >>> /' < bashtap_out_tmp)"
 
-            if [ ! -z "$cmd_output" ]; then
-                bashtap_output+="$cmd_output"
-                bashtap_output+=$'\n'
-            fi
-            if [ "$cmd_ret" -ne 0 ]; then
-                exit $cmd_ret
-            fi
+                # On the first two tries, if it fails retry right away
+                if [ "$cmd_ret" -ne 0 ] && [ "$retry" -lt 3 ]; then
+                    continue
+                fi
+
+                # If it passes or fails but it's the last retry...
+                if [ ! -z "$cmd_output" ]; then
+                    bashtap_output+="$cmd_output"
+                    bashtap_output+=$'\n'
+                fi
+
+                if [ "$cmd_ret" -ne 0 ]; then
+                    exit $cmd_ret
+                else
+                    # Stop the loop on the first success
+                    break
+                fi
+            done
         fi
     done <"$bashtap_org_script"
 }
