@@ -341,7 +341,6 @@ def get_profile(profile):
         # Retrieve data from the password store
         p = Popen(["pass", profile], stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
-        p.wait()
 
         if p.returncode != 0:
             sys.stderr.write("Error while reading profile from pass: {!r}\n".format(stderr))
