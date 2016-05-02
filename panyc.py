@@ -7,8 +7,9 @@ import sys
 import argparse
 import logging
 import pexpect
+import shlex
 from io import StringIO
-from subprocess import Popen, PIPE
+from subprocess import Popen, call, PIPE
 from configparser import RawConfigParser, NoOptionError
 
 __version__ = "0.0.1"
@@ -26,6 +27,8 @@ class Exit(Exception):
     BADCONFIG = 10
     BADGROUP = 11
     BADLOGIN = 12
+
+    ERRAFTER = 20
 
     PREMATURE_END = 50
     TIMEOUT = 51
@@ -125,6 +128,8 @@ class VPNManager(object):
             self.disconnect()
             self.exit()
 
+            LOG.info("VPN disconnected successfully")
+
             raise Exit(Exit.SUCCESS, "VPN disconnected successfully")
 
         else:
@@ -143,7 +148,11 @@ class VPNManager(object):
 
             self.exit()
 
-            raise Exit(Exit.SUCCESS, "VPN connected successfully")
+            LOG.info("VPN connected successfully")
+
+            post_cmd(self.profile["post_cmd"])
+
+            raise Exit(Exit.SUCCESS, "VPN connected and setup successfully")
 
     def read_profile(self):
         """Read and parse profile parameters
@@ -289,9 +298,22 @@ class VPNManager(object):
         return client_version
 
     def exit(self):
+        """Exist the VPN client
+        """
         self._expect("VPN> ")
         self.p.sendline("exit")
         self._expect("goodbye\.\.\.")
+
+
+def post_cmd(command):
+    """Run the specified command and wait for it to finish
+    """
+    if command:
+        retcode = call(shlex.split(command))
+
+        if retcode != 0:
+            raise Exit(Exit.ERRAFTER, "VPN state changed but post-cmd exited "
+                       "with non-zero: {}".format(retcode))
 
 
 def get_profile(profile):
@@ -375,8 +397,6 @@ def parse_sys_args():
     )
     parser.add_argument("-c", "--cmd", default=VPN,
                         help="Command and path to launch the vpn binary (default: {})".format(VPN))
-    parser.add_argument("-p", "--post-cmd",
-                        help="Call post_cmd in the configuration after establishing a connection")
     parser.add_argument("-v", "--verbose", action="count", default=0,
                         help="Verbosity level. Warning on -vv (highest level) user input will be printed on screen")
 
@@ -396,9 +416,6 @@ def parse_sys_args():
 
     if args.action is None and not args.version:
         raise parser.error("Argument: 'action' is required unless '--version' is given.")
-
-    if args.post_cmd:
-        raise parser.error("Option '--post-cmd' is not yet implemented")
 
     return args
 
