@@ -301,6 +301,7 @@ def get_profile(profile):
 
     if profile == "-":
         LOG.debug("Reading profile from stdin")
+        profile = "STDIN"
         data = sys.stdin.read()
 
         # Convert input to file like object
