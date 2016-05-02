@@ -18,10 +18,10 @@
 >  >> Please enter your username and password.
 >    0) ADMIN
 >    1) USER
->Group: [USER] 
-<
->Username: [myuser] 
-<
+>Group: [ADMIN] 
+<1
+>Username: [username] 
+<myuser
 >  Password: 
 <mypassword
 >  >> state: Connecting

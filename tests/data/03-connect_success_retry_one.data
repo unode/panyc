@@ -20,8 +20,17 @@
 >    1) USER
 >Group: [USER] 
 <
->Username: [myuser] 
+>Username: [username] 
+<myuser
+>  Password: 
+<mypassword
+>  >> Login failed.
+>    0) ADMIN
+>    1) USER
+>Group: [USER] 
 <
+>Username: [username] 
+<myuser
 >  Password: 
 <mypassword
 >  >> state: Connecting

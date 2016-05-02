@@ -1,0 +1,53 @@
+>Cisco AnyConnect Secure Mobility Client (version 4.2.03013) .
+>
+>Copyright (c) 2004 - 2016 Cisco Systems, Inc.  All Rights Reserved.
+>
+>
+>  >> state: Disconnected
+>VPN>   >> state: Disconnected
+>VPN>   >> notice: Ready to connect.
+>VPN>   >> registered with local VPN subsystem.
+>VPN> 
+<state
+>VPN>   >> state: Disconnected
+>VPN> 
+<connect localhost
+>  >> contacting host (localhost) for login information...
+>VPN>   >> notice: Contacting localhost.
+>
+>  >> Please enter your username and password.
+>    0) ADMIN
+>    1) USER
+>Group: [USER] 
+<
+>Username: [username] 
+<myuser
+>  Password: 
+<mypassword
+>  >> Login failed.
+>    0) ADMIN
+>    1) USER
+>Group: [USER] 
+<
+>Username: [username] 
+<myuser
+>  Password: 
+<mypassword
+>  >> warning: Unable to contact localhost.
+>  >> error: Connection attempt has timed out.  Please verify Internet connectivity.
+>
+>  >> Login failed.
+>    0) ADMIN
+>    1) USER
+>Group: [USER] 
+>Username: [username] 
+<myuser
+>  Password: 
+<mypassword
+>VPN>   >> state: Disconnected
+>VPN>   >> state: Disconnected
+>VPN> 
+<exit
+>goodbye...
+>
+>
