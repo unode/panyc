@@ -19,18 +19,18 @@ Its main features are:
 
 ## Config example
 
-See [the config used for tests](tests/data/default.config)
+See [one config used for tests](tests/data/postcmd.config)
 
 
 ## Usage
 
 The script can be used by feeding a configuration file via stdin:
 
-    cat tests/data/default.config | ./panyc.py -
+    cat tests/data/default.config | ./panyc.py connect -
 
 or by providing a password store identifier:
 
-    ./panyc.py vpn/myvpn
+    ./panyc.py connect vpn/myvpn
 
 You can store a config entry in pass by running:
 
@@ -43,15 +43,15 @@ For more information check [the password-store website](https://passwordstore.or
 
 To start a new connection run:
 
-    ./panyc.py vpn/myvpn
+    ./panyc.py connect vpn/myvpn
 
 to disconnect:
 
-    ./panyc.py --disconnect
+    ./panyc.py disconnect
 
 to check the status of the connection:
 
-    ./panyc.py --status
+    ./panyc.py status
 
 to obtain the version of the VPN client:
 
