@@ -21,13 +21,16 @@ class Exit(Exception):
     ERROR = 1
     NOAGENT = 2
     CONN_TIMEOUT = 3
-    BADGROUP = 4
-    BADLOGIN = 5
-    ALREADY = 6
+    ALREADY = 4
 
-    PREMATURE_END = 100
-    TIMEOUT = 101
-    OOPS = 110
+    BADCONFIG = 10
+    BADGROUP = 11
+    BADLOGIN = 12
+
+    PREMATURE_END = 50
+    TIMEOUT = 51
+
+    OOPS = 100
 
     def __init__(self, exitcode, msg=None):
         self.exitcode = exitcode
@@ -323,14 +326,14 @@ def get_profile(profile):
 
     # Check if the required section is available in the config file
     if not conf.has_section(config):
-        raise LookupError("Settings section not found in {}".format(profile))
+        raise Exit(Exit.BADCONFIG, "Settings section not found in {}".format(profile))
 
     # Read all necessary parameters
     for param in params:
         try:
             params[param] = conf.get(config, param)
         except NoOptionError:
-            raise NoOptionError("Missing parameter {} for account {}".format(
+            raise Exit(Exit.BADCONFIG, "Missing parameter {} for account {}".format(
                 param, profile))
 
     return params

@@ -12,7 +12,7 @@ function get_config {
 function run_cmd {
     TEST_CONFIG="${1}"
     shift
-    ${bashtap_org_pwd}/../panyc.py - --cmd "${bashtap_org_pwd}/helpers/dumbfeed.py ${bashtap_org_pwd}/data/${TEST_CONFIG}.data" "$@"
+    ${bashtap_org_pwd}/../panyc.py --cmd "${bashtap_org_pwd}/helpers/dumbfeed.py ${bashtap_org_pwd}/data/${TEST_CONFIG}.data" "$@"
 }
 
 # Include the base script that does the actual work.
