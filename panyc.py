@@ -12,7 +12,7 @@ from io import StringIO
 from subprocess import Popen, call, PIPE
 from configparser import RawConfigParser, NoOptionError
 
-__version__ = "0.0.1"
+__version__ = "0.1"
 
 
 class Exit(Exception):
