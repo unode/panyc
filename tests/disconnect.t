@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-
-source bash_tap_p.sh
-
+. bash_tap_p.sh
 
 TEST="04-disconnect_success"
 run_cmd "${TEST}" -vv disconnect | grep "VPN disconnected successfully"

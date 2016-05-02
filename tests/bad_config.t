@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-
-source bash_tap_p.sh
-
+. bash_tap_p.sh
 
 TEST="03-connect_success"
 cat /dev/null | (run_cmd "${TEST}" -vv connect - || true) | grep "Settings section not found in STDIN"

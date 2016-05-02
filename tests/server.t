@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-
-source bash_tap_p.sh
+. bash_tap_p.sh
 
 CONFIG="$(get_config default)"
 

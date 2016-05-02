@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-
-source bash_tap_p.sh
+. bash_tap_p.sh
 
 TEST="02-status_connected"
 run_cmd "${TEST}" -vv status | grep "VPN is connected"
