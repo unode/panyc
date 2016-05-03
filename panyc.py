@@ -309,7 +309,10 @@ def post_cmd(command):
     """Run the specified command and wait for it to finish
     """
     if command:
-        retcode = call(shlex.split(command))
+        cmd = shlex.split(command)
+        LOG.debug("Running post-cmd %s", cmd)
+
+        retcode = call(cmd)
 
         if retcode != 0:
             raise Exit(Exit.ERRAFTER, "VPN state changed but post-cmd exited "
