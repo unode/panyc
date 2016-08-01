@@ -12,7 +12,6 @@ Its main features are:
 * Support for multiple connection profiles
 * Store all sensitive data on a keychain (passwordstore.org)
 * Customize connection after success. Useful for:
-    * Altering routing rules
     * Automate waking up of services
     * Anything you can think of...
 
