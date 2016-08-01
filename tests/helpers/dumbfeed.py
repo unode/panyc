@@ -107,7 +107,7 @@ class Protocol(object):
                 start = time.time()
 
                 if self._is_there_data():
-                    c = sys.stdin.read(1)
+                    c = sys.stdin.readline()
                     if c == '\x1b':         # x1b is ESC TODO (so what? what's the relevance)
                         return
 
@@ -123,20 +123,20 @@ class Protocol(object):
 
     def run(self):
         for step, data in self.steps:
-            for char in data:
+            for line in data.splitlines(True):
                 if step == Protocol.WRITING:
-                    self.write(char)
+                    self.write(line)
 
                 elif step == Protocol.READING:
                     try:
                         read = self.read()
                     except TimeoutError:
                         raise ExitError("Expected data via stdin that never got "
-                                        "delivered {0}".format(char))
+                                        "delivered {0}".format(line))
 
-                    if read != char:
+                    if read != line:
                         raise ExitError("Unexpected data received via stdin: "
-                                        "Expected {0!r} and got {1!r}".format(char, read))
+                                        "Expected {0!r} and got {1!r}".format(line, read))
 
 
 def parse_protocol(file):
