@@ -1,7 +1,7 @@
 # Panyc
 
 For Python AnyConnect, is a small python wrapper on Cisco's AnyConnect
-command-line VPN interface.
+command-line VPN interface. [![Build Status](https://travis-ci.org/Unode/panyc.svg?branch=master)](https://travis-ci.org/Unode/panyc)
 
 This wrapper was created because the provided command line binary has limited
 automation functionality making it hard to script in a fault tolerant way.
