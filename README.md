@@ -40,7 +40,7 @@ or by providing a passwordstore identifier:
 
     ./panyc.py connect vpn/myvpn
 
-You can a skeleton config to passwordstore (aka pass) by running:
+You can add a skeleton config to passwordstore (aka pass) by running:
 
     cat tests/data/default.config | pass insert -m vpn/myvpn
 
