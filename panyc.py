@@ -379,7 +379,9 @@ def setup_logging(args):
     elif args.verbose >= 2:
         level = logging.DEBUG
     else:
-        level = logging.WARN
+        # While not fully tested, always run in debug mode so we can capture what went wrong
+        # level = logging.WARN
+        level = logging.DEBUG
 
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(message)s",
