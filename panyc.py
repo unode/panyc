@@ -175,9 +175,9 @@ class VPNManager(object):
 
         # TODO What if no group is requested?
         if retry:
-            states = ["(.*)Group: \[(.*)\]"]
+            states = ["(.*)Group: \\[(.*)\\]"]
         else:
-            states = ["Please enter your username and password\.(.*)Group: \[(.*)\]"]
+            states = ["Please enter your username and password\\.(.*)Group: \\[(.*)\\]"]
 
         # Check if we didn't get a connection timeout for being unable to reach the server
         states.extend([
@@ -225,7 +225,7 @@ class VPNManager(object):
             LOG.debug("Using ID %s for group %s", groupid, profile["group"])
             self.p.sendline(groupid)
 
-        self._expect("Username: \[(.*)\]")
+        self._expect("Username: \\[(.*)\\]")
         default_login, = self.p.match.groups()
 
         # Go with default login
@@ -290,7 +290,7 @@ class VPNManager(object):
         self._expect("VPN> ")
         self.p.sendline("version")
 
-        self._expect("Client \(version ([0-9\.]*)\) \.")
+        self._expect("Client \\(version ([0-9\\.]*)\\) \\.")
         client_version, = self.p.match.groups()
 
         LOG.debug("Obtained version %s", client_version)
@@ -302,7 +302,7 @@ class VPNManager(object):
         """
         self._expect("VPN> ")
         self.p.sendline("exit")
-        self._expect("goodbye\.\.\.")
+        self._expect("goodbye\\.\\.\\.")
 
 
 def post_cmd(command):
