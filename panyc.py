@@ -127,7 +127,13 @@ class VPNManager(object):
 
         # Wait until the process ends
         LOG.info("All done, now just keeping an eye on the openconnect process")
-        self.p.wait()
+        try:
+            self.p.wait()
+        except KeyboardInterrupt:
+            LOG.info("Received Ctrl+C, shutting down VPN")
+            self.p.close()
+
+            raise Exit(Exit.SUCCESS, "Exiting after shutdown initiated by user")
 
         if self.p.exitstatus:
             raise Exit(Exit.ERROR, "VPN finished handshake but exited with error")
