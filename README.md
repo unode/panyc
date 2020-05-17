@@ -6,6 +6,9 @@ command-line VPN interface. [![Build Status](https://travis-ci.org/unode/panyc.s
 This wrapper was created because the provided command line binary has limited
 automation functionality making it hard to script in a fault tolerant way.
 
+The branch `openconnect` contains a rough adaptation of Panyc to work with the
+OpenConnect client.
+
 
 Its main features are:
 
@@ -13,6 +16,7 @@ Its main features are:
 * Store all sensitive data on a keychain (passwordstore.org)
 * Customize connection after success. Useful for:
     * Automate waking up of services
+    * Reconfiguring routes
     * Anything you can think of...
 
 
@@ -34,11 +38,11 @@ To install in a virtualenv use:
 
 The script can be used by feeding a configuration file via stdin:
 
-    cat tests/data/default.config | ./panyc.py connect -
+    cat tests/data/default.config | ./panyc.py -
 
-or by providing a passwordstore identifier:
+or by providing a [passwordstore](https://passwordstore.org) identifier:
 
-    ./panyc.py connect vpn/myvpn
+    ./panyc.py vpn/myvpn
 
 You can add a skeleton config to passwordstore (aka pass) by running:
 
@@ -51,19 +55,7 @@ For more information about pass check [the password-store website](https://passw
 
 To start a new connection run:
 
-    ./panyc.py connect vpn/myvpn
-
-to disconnect:
-
-    ./panyc.py disconnect
-
-to check the status of the connection:
-
-    ./panyc.py status
-
-to obtain the version of the VPN client:
-
-    ./panyc.py --version
+    ./panyc.py vpn/myvpn
 
 for anything else:
 
