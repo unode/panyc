@@ -36,6 +36,10 @@ To install in a virtualenv use:
 
 ## Usage
 
+If you are not on NixOS you will likely need to specify where `openconnect` is installed:
+
+    ./panyc.py --cmd /path/to/openconnect ...
+
 The script can be used by feeding a configuration file via stdin:
 
     cat tests/data/default.config | ./panyc.py -
