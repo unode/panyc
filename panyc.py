@@ -201,7 +201,7 @@ def post_cmd(command):
     """
     if command:
         cmd = shlex.split(command)
-        LOG.debug("Running post-cmd %s", cmd)
+        LOG.info("Running post-cmd %s", cmd)
 
         retcode = call(cmd)
 
