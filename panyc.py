@@ -1,4 +1,5 @@
-#! /usr/bin/env python3
+#! /usr/bin/env nix-shell
+#! nix-shell -p python37Packages.pexpect -i python3
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
@@ -8,6 +9,7 @@ import argparse
 import logging
 import pexpect
 import shlex
+import warnings
 from io import StringIO
 from subprocess import Popen, call, PIPE
 from configparser import RawConfigParser, NoOptionError
@@ -20,20 +22,14 @@ class Exit(Exception):
     """
     SUCCESS = 0
     ERROR = 1
-    NOAGENT = 2
-    CONN_TIMEOUT = 3
-    ALREADY = 4
+    CONN_TIMEOUT = 2
 
     BADCONFIG = 10
     BADGROUP = 11
     BADLOGIN = 12
 
-    ERRAFTER = 20
-
     PREMATURE_END = 50
     TIMEOUT = 51
-
-    OOPS = 100
 
     def __init__(self, exitcode, msg=None):
         self.exitcode = exitcode
@@ -83,167 +79,109 @@ class VPNManager(object):
         raise Exit(Exit.TIMEOUT, "VPN client stopped responding")
 
     def begin(self):
-        self.p = pexpect.spawnu(self.args.cmd)
+        # With openconnect we start by connecting to the host
+        # so we need to read the profile before anything
+        self.read_profile()
+
+        LOG.debug("Connecting to %s", self.profile["host"])
+        self.p = pexpect.spawn("sudo", [
+            self.args.cmd,
+            self.profile["host"],
+            "--interface", self.profile["interface"] or "tun0",
+        ], encoding='utf-8')
 
         if self.args.verbose >= 2:
             LOG.debug("Enabling subprocess logging to stdout")
             self.p.logfile = sys.stdout
 
         states = [
-            "VPN Service is not available",
-            "registered with local VPN subsystem",
+            "Connected to HTTPS on",
         ]
 
         i = self._expect(states)
 
+        if i != 0:
+            raise Exit(Exit.ERROR, "Connection was not established")
+
+        LOG.info("Connected to %s", self.profile["host"])
+
+        self.group_select()
+        self.authenticate()
+
+        LOG.info("VPN connected, waiting for possible errors")
+
+        states = [
+            "Failed to bind local",
+            pexpect.TIMEOUT,
+        ]
+
+        # NOTE Not using self._expect here since we don't want to fail on timeout
+        i = self.p.expect(states, timeout=5)
+
         if i == 0:
-            raise Exit(Exit.NOAGENT, "VPN agent 'vpnagentd' is not running")
+            raise Exit(Exit.ERROR, "Failure to setup interface. Check for permissions")
 
-        LOG.info("vpnagentd is online.")
+        LOG.info("No error after 5 seconds, resuming as success")
 
-        # User requested only the version of the VPN client
-        if self.args.version:
-            LOG.info("Obtaining version...")
-            # NOTE: If the VPN binary/client is called with "vpn -s" and user asks for version,
-            # interaction is broken and the process stops accepting input causing it to hang and timeout.
-            version = self.version()
-            self.exit()
+        post_cmd(self.profile["post_cmd"])
 
-            raise Exit(Exit.SUCCESS, "Panyc is version: {}\nVPN client is version: {}".format(__version__, version))
+        # Wait until the process ends
+        LOG.info("All done, now just keeping an eye on the openconnect process")
+        self.p.wait()
 
-        # User requested only the status of the connection
-        if self.args.action == "status":
-            LOG.info("Obtaining connection status...")
-            state = self.state()
-            self.exit()
-
-            if state:
-                raise Exit(Exit.SUCCESS, "VPN is connected")
-            else:
-                raise Exit(Exit.ERROR, "VPN is not connected")
-
-        # User requested that we would disconnect
-        elif self.args.action == "disconnect":
-            LOG.info("Disconnecting...")
-            self.disconnect()
-            self.exit()
-
-            LOG.info("VPN disconnected successfully")
-
-            raise Exit(Exit.SUCCESS, "VPN disconnected successfully")
-
+        if self.p.exitstatus:
+            raise Exit(Exit.ERROR, "VPN finished handshake but exited with error")
         else:
-            # If we are going to connect, check if we are not already connected to somewhere
-            if self.state():
-                raise Exit(Exit.ALREADY, "VPN is already connected. Disconnect first")
-
-            # Ok we are good to go!
-            LOG.info("Starting connection...")
-            self.read_profile()
-            self.connect()
-            self.authenticate()
-
-            if not self.state():
-                raise Exit(Exit.OOPS, "VPN should be connected but is not. Something went wrong.")
-
-            self.exit()
-
-            LOG.info("VPN connected successfully")
-
-            post_cmd(self.profile["post_cmd"])
-
-            raise Exit(Exit.SUCCESS, "VPN connected and setup successfully")
+            raise Exit(Exit.SUCCESS, "VPN exited cleanly")
 
     def read_profile(self):
         """Read and parse profile parameters
         """
         self.profile = get_profile(self.args.profile)
 
-    def connect(self):
-        """Connect to server
+    def group_select(self):
+        """Select connection group
         """
-        self.p.sendline("connect {0}".format(self.profile["host"]))
-
-        self._expect("contacting host")
-
-    def authenticate(self, retry=False):
-        """Authenticate against server
-        """
-        LOG.info("Authenticating...")
-
         profile = self.profile
 
         # TODO What if no group is requested?
-        if retry:
-            states = ["(.*)Group: \\[(.*)\\]"]
-        else:
-            states = ["Please enter your username and password\\.(.*)Group: \\[(.*)\\]"]
-
-        # Check if we didn't get a connection timeout for being unable to reach the server
-        states.extend([
-            "Connection attempt has timed out.",
-            pexpect.TIMEOUT,
-        ])
+        states = [
+            "GROUP: \\[(.*)\\]:",
+        ]
 
         i = self._expect(states)
 
         if i == 0:
-            group_list, default_group = self.p.match.groups()
-            LOG.debug("%s is the default group", default_group)
-
+            group_list = self.p.match.groups()[0].split("|")
+            LOG.debug("Group choices %s", group_list)
         elif i == 1:
             raise Exit(Exit.CONN_TIMEOUT, "Connection timed out. Check your internet.")
 
-        # If the profile group is the same as default just keep going
-        if profile["group"] == default_group:
-            LOG.debug("Going with default group")
-            self.p.sendline()
+        if profile["group"] not in group_list:
+            raise Exit(Exit.BADGROUP, "Profile provided group is not on the "
+                       "list from the server {}".format(group_list))
 
-        # Otherwise map group names to group IDs.
-        # In the prompt we need to provide the group ID
-        else:
-            LOG.debug("Obtaining group id from: %r", group_list)
-            groups = {}
-            for line in group_list.splitlines():
-                line = line.strip()
+        LOG.debug("Requesting group %s", profile["group"])
+        self.p.sendline(profile["group"])
 
-                if not line:
-                    continue
+    def authenticate(self, retry=False):
+        """Authenticate against server
+        """
+        profile = self.profile
 
-                LOG.debug("Parsing line %r", line)
-                _id, name = line.split(") ")
-                groups[name] = _id
+        LOG.info("Authenticating...")
 
-            if profile["group"] not in groups:
-                raise Exit(Exit.BADGROUP, "Profile provided group is not on the "
-                           "list from the server {}".format(groups))
+        self._expect("Username:")
 
-            LOG.debug("Groups parsed: %s", groups)
+        LOG.debug("Providing login %s", profile["login"])
+        self.p.sendline(profile["login"])
 
-            groupid = groups[profile["group"]]
-
-            LOG.debug("Using ID %s for group %s", groupid, profile["group"])
-            self.p.sendline(groupid)
-
-        self._expect("Username: \\[(.*)\\]")
-        default_login, = self.p.match.groups()
-
-        # Go with default login
-        if profile["login"] == default_login:
-            LOG.debug("Going with default login")
-            self.p.sendline()
-
-        else:
-            LOG.debug("Providing login %s", profile["login"])
-            self.p.sendline(profile["login"])
-
-        # Password handling
-        self._expect("Password: ")
+        self._expect("Password:")
         self.p.sendline(profile["password"])
 
         states = [
-            ">> state: Connected",
-            ">> Login failed"
+            "Established DTLS connection",
+            "Authentication failed."
         ]
         i = self._expect(states)
 
@@ -257,53 +195,6 @@ class VPNManager(object):
                 LOG.info("Login failed. Retrying...")
                 self.authenticate(retry=True)
 
-    def state(self):
-        """Return True if connected and False if disconnected
-
-        If the state is unknown for some reason, it will most likely timeout
-        """
-        self._expect("VPN> ")
-        self.p.sendline("state")
-        states = [
-            ">> state: Disconnected",
-            ">> state: Connected",
-        ]
-        # We get states[0] or states[1] which match False/True for disconnected/connected
-        return bool(self._expect(states))
-
-    def disconnect(self):
-        """Disconnect if a connection is already active
-        """
-        if self.state():
-            self._expect("VPN> ")
-            self.p.sendline("disconnect")
-            self._expect("state: Disconnected")
-
-            if self.state():
-                raise Exit(Exit.OOPS, "VPN failed to disconnect. Something went wrong.")
-        else:
-            raise Exit(Exit.ALREADY, "VPN is not connected. Cannot disconnect")
-
-    def version(self):
-        """Return the version of the VPN client
-        """
-        self._expect("VPN> ")
-        self.p.sendline("version")
-
-        self._expect("Client \\(version ([0-9\\.]*)\\) \\.")
-        client_version, = self.p.match.groups()
-
-        LOG.debug("Obtained version %s", client_version)
-
-        return client_version
-
-    def exit(self):
-        """Exist the VPN client
-        """
-        self._expect("VPN> ")
-        self.p.sendline("exit")
-        self._expect("goodbye\\.\\.\\.")
-
 
 def post_cmd(command):
     """Run the specified command and wait for it to finish
@@ -315,8 +206,7 @@ def post_cmd(command):
         retcode = call(cmd)
 
         if retcode != 0:
-            raise Exit(Exit.ERRAFTER, "VPN state changed but post-cmd exited "
-                       "with non-zero: {}".format(retcode))
+            warnings.warn("VPN connected but post-cmd exited with non-zero: {}".format(retcode))
 
 
 def get_profile(profile):
@@ -328,6 +218,7 @@ def get_profile(profile):
         "group": None,      # Group used in connection profile
         "login": None,      # Username
         "password": None,
+        "interface": None,
         "post_cmd": None,   # Script to execute after connection is established
     }
 
@@ -354,7 +245,7 @@ def get_profile(profile):
 
     # Parse the config data
     conf = RawConfigParser()
-    conf.readfp(configdata)
+    conf.read_file(configdata)
 
     # Check if the required section is available in the config file
     if not conf.has_section(config):
@@ -395,31 +286,26 @@ def setup_logging(args):
 def parse_sys_args():
     """Parse command line arguments
     """
-    VPN = "/opt/cisco/anyconnect/bin/vpn"
+    class VersionAction(argparse.Action):
+        def __call__(self, *args, **kwargs):
+            raise Exit(Exit.SUCCESS, "Panyc is version: {}".format(__version__))
+
+    VPN = "/run/current-system/sw/bin/openconnect"
     parser = argparse.ArgumentParser(
-        description="Interact with Cisco's AnyConnect VPN client"
+        description="Interact with openconnect VPN client"
     )
     parser.add_argument("-c", "--cmd", default=VPN,
                         help="Command and path to launch the vpn binary (default: {})".format(VPN))
     parser.add_argument("-v", "--verbose", action="count", default=0,
                         help="Verbosity level. Warning on -vv (highest level) user input will be printed on screen")
 
-    parser.add_argument("--version", action="store_true",
-                        help="Print the version of panyc and the VPN client")
+    parser.add_argument("--version", action=VersionAction, nargs=0,
+                        help="Print the version of panyc")
 
-    subparser = parser.add_subparsers(dest="action")
-
-    connect = subparser.add_parser("connect")
-    connect.add_argument("profile",
-                         help="Name of connection profile (check README) or '-' to read from stdin.")
-
-    subparser.add_parser("disconnect")
-    subparser.add_parser("status")
+    parser.add_argument("profile",
+                        help="Name of connection profile (check README) or '-' to read from stdin.")
 
     args = parser.parse_args()
-
-    if args.action is None and not args.version:
-        raise parser.error("Argument: 'action' is required unless '--version' is given.")
 
     return args
 
