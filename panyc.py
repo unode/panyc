@@ -200,8 +200,9 @@ def post_cmd(command):
     """Run the specified command and wait for it to finish
     """
     if command:
+        LOG.info("Running post-cmd: %s", command)
         cmd = shlex.split(command)
-        LOG.info("Running post-cmd %s", cmd)
+        LOG.debug("Post-cmd launched as %s", cmd)
 
         retcode = call(cmd)
 
