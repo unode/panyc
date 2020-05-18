@@ -116,12 +116,12 @@ class VPNManager(object):
         ]
 
         # NOTE Not using self._expect here since we don't want to fail on timeout
-        i = self.p.expect(states, timeout=5)
+        i = self.p.expect(states, timeout=2)
 
         if i == 0:
             raise Exit(Exit.ERROR, "Failure to setup interface. Check for permissions")
 
-        LOG.info("No error after 5 seconds, resuming as success")
+        LOG.info("No error after 2 seconds, resuming as success")
 
         post_cmd(self.profile["post_cmd"])
 
