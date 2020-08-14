@@ -187,7 +187,8 @@ class VPNManager(object):
 
         states = [
             "Established DTLS connection",
-            "Authentication failed."
+            "Authentication failed.",
+            "DTLS handshake failed: Resource temporarily unavailable, try again.",
         ]
         i = self._expect(states)
 
