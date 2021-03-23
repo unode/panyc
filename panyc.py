@@ -241,7 +241,7 @@ def get_profile(profile):
     else:
         LOG.debug("Reading profile from password store: %s", profile)
         # Retrieve data from the password store
-        p = Popen(["pass", profile], stdout=PIPE, stderr=PIPE)
+        p = Popen(["pass", "show", profile], stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
 
         if p.returncode != 0:
