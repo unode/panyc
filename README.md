@@ -6,6 +6,9 @@ command-line VPN interface. [![Build Status](https://travis-ci.org/unode/panyc.s
 This wrapper was created because the provided command line binary has limited
 automation functionality making it hard to script in a fault tolerant way.
 
+The branch `openconnect` contains a rough adaptation of Panyc to work with the
+OpenConnect client.
+
 
 Its main features are:
 
@@ -36,7 +39,7 @@ The script can be used by feeding a configuration file via stdin:
 
     cat tests/data/default.config | ./panyc.py connect -
 
-or by providing a passwordstore identifier:
+or by providing a [passwordstore](https://passwordstore.org) identifier:
 
     ./panyc.py connect vpn/myvpn
 
